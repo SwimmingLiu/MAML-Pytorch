@@ -93,46 +93,46 @@ class MiniImagenet(Dataset):
             self.support_x_batch.append(support_x)  # 将当前集添加到支持集批次
             self.query_x_batch.append(query_x)  # 将当前集添加到查询集批次
 
-        def __getitem__(self, index):
-            # 根据索引获取数据批次。
-            # :param index: 批次的索引
-            # :return: 支持集和查询集（图像和标签）
+    def __getitem__(self, index):
+        # 根据索引获取数据批次。
+        # :param index: 批次的索引
+        # :return: 支持集和查询集（图像和标签）
 
-            support_x = torch.FloatTensor(self.setsz, 3, self.resize, self.resize)  # 支持集图像
-            support_y = np.zeros((self.setsz), dtype=np.int)  # 支持集标签
-            query_x = torch.FloatTensor(self.querysz, 3, self.resize, self.resize)  # 查询集图像
-            query_y = np.zeros((self.querysz), dtype=np.int)  # 查询集标签
+        support_x = torch.FloatTensor(self.setsz, 3, self.resize, self.resize)  # 支持集图像
+        support_y = np.zeros((self.setsz), dtype=np.int)  # 支持集标签
+        query_x = torch.FloatTensor(self.querysz, 3, self.resize, self.resize)  # 查询集图像
+        query_y = np.zeros((self.querysz), dtype=np.int)  # 查询集标签
 
-            flatten_support_x = [os.path.join(self.path, item) for sublist in self.support_x_batch[index] for item in
-                                 sublist]
-            support_y = np.array(
-                [self.img2label[item[:9]] for sublist in self.support_x_batch[index] for item in sublist]).astype(
-                np.int32)
-            flatten_query_x = [os.path.join(self.path, item) for sublist in self.query_x_batch[index] for item in
-                               sublist]
-            query_y = np.array(
-                [self.img2label[item[:9]] for sublist in self.query_x_batch[index] for item in sublist]).astype(
-                np.int32)
+        flatten_support_x = [os.path.join(self.path, item) for sublist in self.support_x_batch[index] for item in
+                             sublist]
+        support_y = np.array(
+            [self.img2label[item[:9]] for sublist in self.support_x_batch[index] for item in sublist]).astype(
+            np.int32)
+        flatten_query_x = [os.path.join(self.path, item) for sublist in self.query_x_batch[index] for item in
+                           sublist]
+        query_y = np.array(
+            [self.img2label[item[:9]] for sublist in self.query_x_batch[index] for item in sublist]).astype(
+            np.int32)
 
-            unique = np.unique(support_y)  # 支持集中的唯一标签
-            random.shuffle(unique)  # 打乱标签
-            support_y_relative = np.zeros(self.setsz)  # 支持集的相对标签
-            query_y_relative = np.zeros(self.querysz)  # 查询集的相对标签
-            for idx, l in enumerate(unique):
-                support_y_relative[support_y == l] = idx  # 分配相对标签
-                query_y_relative[query_y == l] = idx  # 分配相对标签
+        unique = np.unique(support_y)  # 支持集中的唯一标签
+        random.shuffle(unique)  # 打乱标签
+        support_y_relative = np.zeros(self.setsz)  # 支持集的相对标签
+        query_y_relative = np.zeros(self.querysz)  # 查询集的相对标签
+        for idx, l in enumerate(unique):
+            support_y_relative[support_y == l] = idx  # 分配相对标签
+            query_y_relative[query_y == l] = idx  # 分配相对标签
 
-            for i, path in enumerate(flatten_support_x):
-                support_x[i] = self.transform(path)  # 转换支持集图像
+        for i, path in enumerate(flatten_support_x):
+            support_x[i] = self.transform(path)  # 转换支持集图像
 
-            for i, path in enumerate(flatten_query_x):
-                query_x[i] = self.transform(path)  # 转换查询集图像
+        for i, path in enumerate(flatten_query_x):
+            query_x[i] = self.transform(path)  # 转换查询集图像
 
-            return support_x, torch.LongTensor(support_y_relative), query_x, torch.LongTensor(query_y_relative)
+        return support_x, torch.LongTensor(support_y_relative), query_x, torch.LongTensor(query_y_relative)
 
-        def __len__(self):
-            # 返回数据集中的批次总数
-            return self.batchsz
+    def __len__(self):
+        # 返回数据集中的批次总数
+        return self.batchsz
 
 if __name__ == '__main__':
     # 测试代码，通过可视化查看一组图像。
