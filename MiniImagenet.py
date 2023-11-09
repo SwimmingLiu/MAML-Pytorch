@@ -27,6 +27,9 @@ class MiniImagenet(Dataset):
         self.resize = resize  # 图像调整大小
         self.startidx = startidx  # 标签起始索引
 
+        print('shuffle DB :%s, b:%d, %d-way, %d-shot, %d-query, resize:%d' % (
+            mode, batchsz, n_way, k_shot, k_query, resize))
+
         # 根据模式设置图像变换
         if mode == 'train':
             self.transform = transforms.Compose([lambda x: Image.open(x).convert('RGB'),
