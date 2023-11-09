@@ -5,6 +5,8 @@ import  argparse
 
 from    meta import Meta
 
+### 这里是Omniglot数据集训练代码，可参照MiniImagenet数据集
+
 def main(args):
 
     torch.manual_seed(222)

@@ -1,86 +1,62 @@
-import  torch
-from    torch import nn
-from    torch.nn import functional as F
-import  numpy as np
-
-
+import torch
+from torch import nn
+from torch.nn import functional as F
+import numpy as np
 
 class Learner(nn.Module):
-    """
-
-    """
+    # Learner类定义了一个灵活的神经网络，用于元学习
 
     def __init__(self, config, imgc, imgsz):
-        """
-
-        :param config: network config file, type:list of (string, list)
-        :param imgc: 1 or 3
-        :param imgsz:  28 or 84
-        """
+        # 初始化Learner
         super(Learner, self).__init__()
 
+        self.config = config  # 网络配置
 
-        self.config = config
-
-        # this dict contains all tensors needed to be optimized
-        self.vars = nn.ParameterList()
-        # running_mean and running_var
-        self.vars_bn = nn.ParameterList()
+        self.vars = nn.ParameterList()  # 需要优化的所有张量
+        self.vars_bn = nn.ParameterList()  # 批归一化层的运行均值和方差
 
         for i, (name, param) in enumerate(self.config):
-            if name is 'conv2d':
-                # [ch_out, ch_in, kernelsz, kernelsz]
-                w = nn.Parameter(torch.ones(*param[:4]))
-                # gain=1 according to cbfin's implementation
-                torch.nn.init.kaiming_normal_(w)
+            if name == 'conv2d':
+                # 卷积层
+                w = nn.Parameter(torch.ones(*param[:4]))  # 权重参数
+                torch.nn.init.kaiming_normal_(w)  # He初始化
                 self.vars.append(w)
-                # [ch_out]
-                self.vars.append(nn.Parameter(torch.zeros(param[0])))
+                self.vars.append(nn.Parameter(torch.zeros(param[0])))  # 偏置参数
 
-            elif name is 'convt2d':
-                # [ch_in, ch_out, kernelsz, kernelsz, stride, padding]
-                w = nn.Parameter(torch.ones(*param[:4]))
-                # gain=1 according to cbfin's implementation
-                torch.nn.init.kaiming_normal_(w)
+            elif name == 'convt2d':
+                # 转置卷积层
+                w = nn.Parameter(torch.ones(*param[:4]))  # 权重参数
+                torch.nn.init.kaiming_normal_(w)  # He初始化
                 self.vars.append(w)
-                # [ch_in, ch_out]
-                self.vars.append(nn.Parameter(torch.zeros(param[1])))
+                self.vars.append(nn.Parameter(torch.zeros(param[1])))  # 偏置参数
 
-            elif name is 'linear':
-                # [ch_out, ch_in]
-                w = nn.Parameter(torch.ones(*param))
-                # gain=1 according to cbfinn's implementation
-                torch.nn.init.kaiming_normal_(w)
+            elif name == 'linear':
+                # 线性层
+                w = nn.Parameter(torch.ones(*param))  # 权重参数
+                torch.nn.init.kaiming_normal_(w)  # He初始化
                 self.vars.append(w)
-                # [ch_out]
-                self.vars.append(nn.Parameter(torch.zeros(param[0])))
+                self.vars.append(nn.Parameter(torch.zeros(param[0])))  # 偏置参数
 
-            elif name is 'bn':
-                # [ch_out]
-                w = nn.Parameter(torch.ones(param[0]))
+            elif name == 'bn':
+                # 批归一化层
+                w = nn.Parameter(torch.ones(param[0]))  # 权重参数
                 self.vars.append(w)
-                # [ch_out]
-                self.vars.append(nn.Parameter(torch.zeros(param[0])))
+                self.vars.append(nn.Parameter(torch.zeros(param[0])))  # 偏置参数
 
-                # must set requires_grad=False
+                # 不需要梯度的运行均值和方差
                 running_mean = nn.Parameter(torch.zeros(param[0]), requires_grad=False)
                 running_var = nn.Parameter(torch.ones(param[0]), requires_grad=False)
                 self.vars_bn.extend([running_mean, running_var])
 
-
-            elif name in ['tanh', 'relu', 'upsample', 'avg_pool2d', 'max_pool2d',
-                          'flatten', 'reshape', 'leakyrelu', 'sigmoid']:
+            elif name in ['tanh', 'relu', 'upsample', 'avg_pool2d', 'max_pool2d', 'flatten', 'reshape', 'leakyrelu', 'sigmoid']:
+                # 激活函数和其他无学习参数的层
                 continue
             else:
                 raise NotImplementedError
 
-
-
-
-
-
     def extra_repr(self):
         info = ''
+        # 返回学习者架构的字符串表示
 
         for name, param in self.config:
             if name is 'conv2d':
@@ -129,6 +105,8 @@ class Learner(nn.Module):
         :param bn_training: set False to not update
         :return: x, loss, likelihood, kld
         """
+
+        # Learner的前向传播
 
         if vars is None:
             vars = self.vars

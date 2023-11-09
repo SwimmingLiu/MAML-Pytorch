@@ -3,6 +3,7 @@ import  os
 import  os.path
 import  errno
 
+### 这里是Omniglot数据集，可参照MiniImagenet数据集
 
 class Omniglot(data.Dataset):
     urls = [

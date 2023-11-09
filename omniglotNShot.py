@@ -4,6 +4,7 @@ from    PIL import Image
 import  os.path
 import  numpy as np
 
+### 这里对应Omniglot数据集，可参照MiniImagenet数据集
 
 class OmniglotNShot:
 
